@@ -20,7 +20,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        input[type="number"] {
+        select, input[type="number"], input[type="text"] {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -41,40 +41,93 @@
 <body>
     <div class="container">
         <h1>Balance Management</h1>
-        <p>Current Balance: <span id="balance">0</span></p>
-        
-        <h2>Add or Deduct Amount</h2>
-        <input type="number" id="amount" placeholder="Enter amount" required>
-        <button onclick="updateBalance('add')">Add</button>
-        <button onclick="updateBalance('deduct')">Deduct</button>
+        <p>Select User:</p>
+        <select id="userSelect">
+            <option value="">--Select User--</option>
+            <option value="User1">User 1</option>
+            <option value="User2">User 2</option>
+            <option value="User3">User 3</option>
+        </select>
+
+        <div id="actionDiv" style="display: none;">
+            <h2>Action</h2>
+            <button onclick="setAction('add')">Add Amount</button>
+            <button onclick="setAction('deduct')">Deduct Amount</button>
+        </div>
+
+        <div id="amountDiv" style="display: none;">
+            <h2 id="actionTitle"></h2>
+            <input type="number" id="amount" placeholder="Enter amount" required>
+            <input type="text" id="remarks" placeholder="Enter remarks (optional)">
+            <button onclick="processTransaction()">Submit</button>
+        </div>
+
+        <p id="currentBalance">Current Balance: 0</p>
     </div>
 
     <script>
-        let balance = 0;
+        let users = {
+            "User1": { balance: 0 },
+            "User2": { balance: 0 },
+            "User3": { balance: 0 },
+        };
+        let selectedUser = "";
+        let currentUserBalance = 0;
 
-        function updateBalance(action) {
+        document.getElementById('userSelect').addEventListener('change', function() {
+            selectedUser = this.value;
+            currentUserBalance = users[selectedUser].balance;
+            document.getElementById('currentBalance').innerText = `Current Balance: ${currentUserBalance}`;
+            document.getElementById('actionDiv').style.display = 'block';
+        });
+
+        function setAction(action) {
+            document.getElementById('actionTitle').innerText = `${action.charAt(0).toUpperCase() + action.slice(1)} Amount`;
+            document.getElementById('amountDiv').style.display = 'block';
+            document.getElementById('amountDiv').setAttribute('data-action', action);
+        }
+
+        function processTransaction() {
+            const action = document.getElementById('amountDiv').getAttribute('data-action');
             const amountInput = document.getElementById('amount');
+            const remarksInput = document.getElementById('remarks');
             const amount = parseFloat(amountInput.value);
+            const remarks = remarksInput.value;
 
             if (!isNaN(amount) && amount > 0) {
                 if (action === 'add') {
-                    balance += amount;
+                    users[selectedUser].balance += amount;
                 } else if (action === 'deduct') {
-                    if (amount <= balance) {
-                        balance -= amount;
+                    if (amount <= users[selectedUser].balance) {
+                        users[selectedUser].balance -= amount;
                     } else {
                         alert('Cannot deduct more than the current balance.');
                         return;
                     }
                 }
 
-                document.getElementById('balance').innerText = balance;
+                // Update the current balance display
+                currentUserBalance = users[selectedUser].balance;
+                document.getElementById('currentBalance').innerText = `Current Balance: ${currentUserBalance}`;
+
+                // Log the transaction
+                logTransaction(selectedUser, action, amount, remarks);
                 amountInput.value = ''; // Clear input field
+                remarksInput.value = ''; // Clear remarks field
+                alert('Transaction successful!');
             } else {
                 alert('Please enter a valid amount.');
             }
         }
+
+        function logTransaction(user, action, amount, remarks) {
+            const date = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+            const logEntry = `${date} - ${user} ${action}ed ₹${amount} - Remarks: ${remarks}\n`;
+
+            // Simulate logging to a file (for demo purposes, we'll log to console)
+            console.log(logEntry);
+            // Here, you can add functionality to send this log to a server or save it in a file
+        }
     </script>
 </body>
 </html>
-
