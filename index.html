@@ -3,11 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My GitHub Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Balance Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to My GitHub Page!</h1>
-    <p>This is a 2w22dic website hosted on GitHub Pages.</p>
+    <div class="container">
+        <h1>Balance Management</h1>
+        <p>Current Balance: <span id="balance">0</span></p>
+        
+        <h2>Add or Deduct Amount</h2>
+        <input type="number" id="amount" placeholder="Enter amount" required>
+        <button onclick="updateBalance('add')">Add</button>
+        <button onclick="updateBalance('deduct')">Deduct</button>
+    </div>
+
+    <script>
+        let balance = 0;
+
+        function updateBalance(action) {
+            const amountInput = document.getElementById('amount');
+            const amount = parseFloat(amountInput.value);
+
+            if (!isNaN(amount) && amount > 0) {
+                if (action === 'add') {
+                    balance += amount;
+                } else if (action === 'deduct') {
+                    if (amount <= balance) {
+                        balance -= amount;
+                    } else {
+                        alert('Cannot deduct more than the current balance.');
+                        return;
+                    }
+                }
+
+                document.getElementById('balance').innerText = balance;
+                amountInput.value = ''; // Clear input field
+            } else {
+                alert('Please enter a valid amount.');
+            }
+        }
+    </script>
 </body>
 </html>
+
