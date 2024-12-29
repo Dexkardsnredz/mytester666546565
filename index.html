@@ -3,131 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balance Management</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 500px;
-            margin: auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        select, input[type="number"], input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-        }
-        button {
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Balance Management</h1>
-        <p>Select User:</p>
-        <select id="userSelect">
-            <option value="">--Select User--</option>
-            <option value="User1">User 1</option>
-            <option value="User2">User 2</option>
-            <option value="User3">User 3</option>
-        </select>
-
-        <div id="actionDiv" style="display: none;">
-            <h2>Action</h2>
-            <button onclick="setAction('add')">Add Amount</button>
-            <button onclick="setAction('deduct')">Deduct Amount</button>
-        </div>
-
-        <div id="amountDiv" style="display: none;">
-            <h2 id="actionTitle"></h2>
-            <input type="number" id="amount" placeholder="Enter amount" required>
-            <input type="text" id="remarks" placeholder="Enter remarks (optional)">
-            <button onclick="processTransaction()">Submit</button>
-        </div>
-
-        <p id="currentBalance">Current Balance: 0</p>
-    </div>
-
+    <title>Transaction Logger</title>
     <script>
-        let users = {
-            "User1": { balance: 0 },
-            "User2": { balance: 0 },
-            "User3": { balance: 0 },
-        };
-        let selectedUser = "";
-        let currentUserBalance = 0;
-
-        document.getElementById('userSelect').addEventListener('change', function() {
-            selectedUser = this.value;
-            currentUserBalance = users[selectedUser].balance;
-            document.getElementById('currentBalance').innerText = `Current Balance: ${currentUserBalance}`;
-            document.getElementById('actionDiv').style.display = 'block';
-        });
-
-        function setAction(action) {
-            document.getElementById('actionTitle').innerText = `${action.charAt(0).toUpperCase() + action.slice(1)} Amount`;
-            document.getElementById('amountDiv').style.display = 'block';
-            document.getElementById('amountDiv').setAttribute('data-action', action);
-        }
-
-        function processTransaction() {
-            const action = document.getElementById('amountDiv').getAttribute('data-action');
-            const amountInput = document.getElementById('amount');
-            const remarksInput = document.getElementById('remarks');
-            const amount = parseFloat(amountInput.value);
-            const remarks = remarksInput.value;
-
-            if (!isNaN(amount) && amount > 0) {
-                if (action === 'add') {
-                    users[selectedUser].balance += amount;
-                } else if (action === 'deduct') {
-                    if (amount <= users[selectedUser].balance) {
-                        users[selectedUser].balance -= amount;
-                    } else {
-                        alert('Cannot deduct more than the current balance.');
-                        return;
-                    }
-                }
-
-                // Update the current balance display
-                currentUserBalance = users[selectedUser].balance;
-                document.getElementById('currentBalance').innerText = `Current Balance: ${currentUserBalance}`;
-
-                // Log the transaction
-                logTransaction(selectedUser, action, amount, remarks);
-                amountInput.value = ''; // Clear input field
-                remarksInput.value = ''; // Clear remarks field
-                alert('Transaction successful!');
-            } else {
-                alert('Please enter a valid amount.');
-            }
-        }
+        const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbyBsZLmleOQVUijMb1PGwkFEJOf0Fwz96PnbSuuXxAwRc8iDQLp_e_S0A10DdyNamAr6g/exec'; // Replace with your Google Script URL
 
         function logTransaction(user, action, amount, remarks) {
-            const date = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-            const logEntry = `${date} - ${user} ${action}ed ₹${amount} - Remarks: ${remarks}\n`;
+            fetch(googleScriptUrl + '/logTransaction', {
+                method: 'POST',
+                body: JSON.stringify({ user, action, amount, remarks }),
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Error logging transaction:', response);
+                } else {
+                    loadTransactions(); // Reload transactions after logging
+                }
+            })
+            .catch(error => console.error('Fetch error:', error));
+        }
 
-            // Simulate logging to a file (for demo purposes, we'll log to console)
-            console.log(logEntry);
-            // Here, you can add functionality to send this log to a server or save it in a file
+        function loadTransactions() {
+            fetch(googleScriptUrl + '/getTransactions')
+                .then(response => response.json())
+                .then(data => {
+                    const transactionList = document.getElementById('transactions');
+                    transactionList.innerHTML = ''; // Clear existing entries
+                    data.forEach(row => {
+                        const li = document.createElement('li');
+                        li.textContent = `${row[0]} - ${row[1]} ${row[2]}ed ₹${row[3]} - Remarks: ${row[4]}`;
+                        transactionList.appendChild(li);
+                    });
+                });
+        }
+
+        window.onload = function() {
+            loadTransactions(); // Load transactions on startup
+        };
+
+        function handleTransaction() {
+            const user = 'Admin'; // Replace with actual user
+            const action = document.querySelector('input[name="action"]:checked').value;
+            const amount = document.getElementById('amount').value;
+            const remarks = document.getElementById('remarks').value;
+
+            logTransaction(user, action, amount, remarks);
         }
     </script>
+</head>
+<body>
+    <h1>Transaction Logger</h1>
+    <div>
+        <label>
+            <input type="radio" name="action" value="Add" checked> Add
+        </label>
+        <label>
+            <input type="radio" name="action" value="Deduct"> Deduct
+        </label>
+        <input type="number" id="amount" placeholder="Enter amount" required>
+        <input type="text" id="remarks" placeholder="Enter remarks">
+        <button onclick="handleTransaction()">Submit</button>
+    </div>
+    <h2>Transaction History</h2>
+    <ul id="transactions"></ul>
 </body>
 </html>
