@@ -5,36 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Logger</title>
     <script>
-        const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbyBsZLmleOQVUijMb1PGwkFEJOf0Fwz96PnbSuuXxAwRc8iDQLp_e_S0A10DdyNamAr6g/exec'; // Replace with your Google Script URL
+        const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzSp2zR0pLXWBpKVtMSC4a_nk_dNiIB2FuAT3VmvvQRUjRDLuE7nC_VHWIYicX5Ic5VTg/exec'; // Replace with your Google Script URL
 
         function logTransaction(user, action, amount, remarks) {
-            fetch(googleScriptUrl + '/logTransaction', {
-                method: 'POST',
-                body: JSON.stringify({ user, action, amount, remarks }),
-                headers: { 'Content-Type': 'application/json' }
-            })
+            fetch(googleScriptUrl + '?action=logTransaction&user=' + user + '&actionType=' + action + '&amount=' + amount + '&remarks=' + remarks)
             .then(response => {
-                if (!response.ok) {
-                    console.error('Error logging transaction:', response);
-                } else {
+                if (response.ok) {
                     loadTransactions(); // Reload transactions after logging
+                } else {
+                    console.error('Error logging transaction:', response);
                 }
             })
             .catch(error => console.error('Fetch error:', error));
         }
 
         function loadTransactions() {
-            fetch(googleScriptUrl + '/getTransactions')
+            fetch(googleScriptUrl + '?action=getTransactions')
                 .then(response => response.json())
                 .then(data => {
                     const transactionList = document.getElementById('transactions');
                     transactionList.innerHTML = ''; // Clear existing entries
                     data.forEach(row => {
                         const li = document.createElement('li');
-                        li.textContent = `${row[0]} - ${row[1]} ${row[2]}ed ₹${row[3]} - Remarks: ${row[4]}`;
+                        li.textContent = `${new Date(row[0]).toLocaleString('en-IN')} - ${row[1]} ${row[2]}ed ₹${row[3]} - Remarks: ${row[4]}`;
                         transactionList.appendChild(li);
                     });
-                });
+                })
+                .catch(error => console.error('Error fetching transactions:', error));
         }
 
         window.onload = function() {
@@ -47,7 +44,11 @@
             const amount = document.getElementById('amount').value;
             const remarks = document.getElementById('remarks').value;
 
-            logTransaction(user, action, amount, remarks);
+            if (amount) {
+                logTransaction(user, action, amount, remarks);
+            } else {
+                alert('Please enter a valid amount');
+            }
         }
     </script>
 </head>
